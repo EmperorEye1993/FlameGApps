@@ -1,0 +1,102 @@
+#!/sbin/sh
+#
+############################################
+# This file is part of the FlameGApps Project
+#
+# Copyright (C) 2019 ayandebnath @xda-developers
+#
+# The FlameGApps scripts are free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License,or
+# (at your option) any later version, w/FlameGApps installable zip exception.
+#
+# These scripts are distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+###########################################
+# File Name    : update-binary
+# Last Updated : 2019-12-26
+###########################################
+##
+
+export ZIPFILE="$3"
+export OUTFD="/proc/self/fd/$2"
+export TMP="/tmp"
+
+case "$(uname -m)" in
+  *86*) export BINARCH="x86";; # e.g. Zenfone is i686
+  *ar*) export BINARCH="arm";; # i.e. armv7l and aarch64
+esac
+
+bb="$TMP/busybox-$BINARCH"
+l="$TMP/bin"
+
+setenforce 0
+
+ui_print() {
+  echo "ui_print $1" > "$OUTFD";
+  echo "ui_print" > "$OUTFD";
+}
+
+set_progress() { echo "set_progress $1" > "$OUTFD"; }
+
+ui_print " ";
+ui_print "  _____ _                        ";
+ui_print " |  ___| | __ _ _ __ ___   ___   ";
+ui_print " | |_  | |/ _' | '_ ' _ \ / _ \  ";
+ui_print " |  _| | | (_| | | | | | |  __/  ";
+ui_print " |_|___|_|\__,_|_| |_| |_|\___|  ";
+ui_print "  / ___|  / \   _ __  _ __  ___  ";
+ui_print " | |  _  / _ \ | '_ \| '_ \/ __| ";
+ui_print " | |_| |/ ___ \| |_) | |_) \__ \ ";
+ui_print "  \____/_/   \_\ .__/| .__/|___/ ";
+ui_print "               |_|   |_|         ";
+ui_print " ";
+ui_print "*************************************************";
+ui_print " Android Version : ***";
+ui_print " Build Date      : ***";
+ui_print " Edition type    : ***";
+ui_print " Developed by    : ayandebnath @xda-developers";
+ui_print "*************************************************";
+ui_print " ";
+
+#################
+set_progress 0.10;
+ui_print "Processing...";
+ui_print " ";
+
+for f in busybox-arm flame.prop addon.d.sh installer.sh; do
+  unzip -o "$ZIPFILE" "$f" -d "$TMP";
+done
+
+for f in busybox-arm installer.sh; do
+  chmod +x "$TMP/$f";
+done
+
+# Preparing
+set_progress 0.20;
+if [ -e "$bb" ]; then
+  install -d "$l"
+  for i in $($bb --list); do
+    if ! ln -sf "$bb" "$l/$i" && ! $bb ln -sf "$bb" "$l/$i" && ! $bb ln -f "$bb" "$l/$i" ; then
+      # create script wrapper if symlinking and hardlinking failed because of restrictive selinux policy
+      if ! echo "#!$bb" > "$l/$i" || ! chmod +x "$l/$i" ; then
+        ui_print "ERROR 10: Failed to set-up pre-bundled busybox";
+        exit 1
+      fi
+    fi
+  done
+else
+  exit 1
+fi
+
+PATH="$l:$PATH" $bb ash "$TMP/installer.sh" "$@"
+  exit "$?"
+else
+  ui_print "ERROR 69: Wrong architecture to set-up pre-bundled busybox";
+  exit 1
+fi
+
+## Finished
