@@ -1,0 +1,9 @@
+#
+# FlameGApps prop_files
+#
+ro.flame.android=***
+ro.flame.sdk=***
+ro.flame.arch=***
+ro.flame.edition=***
+##
+#
