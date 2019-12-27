@@ -18,7 +18,7 @@
 #
 ###########################################
 # File Name    : installer.sh
-# Last Updated : 2019-12-26
+# Last Updated : 2019-12-27
 ###########################################
 ##
 # List of the Basic edition gapps files
@@ -66,30 +66,11 @@ recovery_cleanup() {
   [ -z $OLD_LD_CFG ] || export LD_CONFIG_FILE=$OLD_LD_CFG
 }
 
-mk_system_root() {
-  if [ -z "$system_root_tmp" ]; then
-    if [ -d "/system_root" ] && [ "$(ls -A /system_root)" ]; then
-      system_root_tmp=true
-      ui_print "- Moving original /system_root";
-      mkdir /system_root_2
-      mv /system_root/* /system_root_2/
-    else
-      system_root_tmp=false
-      mkdir -p /system_root
-    fi
-  fi
-}
-
 unmount_part() {
-  ui_print "- Unmounting $mounts";
-  for m in $mounts; do
+    ui_print "- Unmounting $mounts";
+    for m in $mounts; do
     umount "$m"
-  done
-  if [ "$system_root_tmp" == "true" ]; then
-    ui_print "- Restoring original /system_root";
-    mv /system_root_2/* /system_root/
-    rm -rf /system_root_2
-  fi
+    done
 }
 
 abort() {
@@ -115,68 +96,74 @@ exit_all() {
     set_progress 1.00;
 }
 
-# Starting Mount Process
+# Pre Mount Process
+for p in "/system" "/system_root"; do
+  if [ -d $p ]; then
+    umount "$p"
+  fi
+done
+
+# Mount Process
 set_progress 0.10;
 ui_print "Mounting Partitions";
 sleep 1;
-mounts=""
-for p in "/cache" "/data" "/product" "/vendor"; do
-  if [ -d "$p" ] && grep -q "$p" "/etc/fstab" && ! mountpoint -q "$p"; then
-    if [ -z "$mounts" ]; then
-      mounts="$p"
-    else
-      mounts="$mounts $p"
-    fi
-  fi
-done
-
-ui_print "- Mounting $mounts";
-for m in $mounts; do
-  if [ "$m" -eq "/product" ]; then
-    mount -o rw "$m"
-  else
-    mount "$m"
-  fi
-done
-
 # Detect A/B partition layout https://source.android.com/devices/tech/ota/ab_updates
 # and system-as-root https://source.android.com/devices/bootloader/system-as-root
 block=/dev/block/bootdevice/by-name/system
 device_abpartition=false
-system_as_root=`getprop ro.build.system_root_image`
-if [ "$system_as_root" == "true" ]; then
-  ui_print "- Device is system-as-root"
-  active_slot=`getprop ro.boot.slot_suffix`
-  if [ ! -z "$active_slot" ]; then
-    device_abpartition=true
-    block=/dev/block/bootdevice/by-name/system$active_slot
-  fi
-  mk_system_root;
-  SYSTEM_MOUNT=/system_root
-  SYSTEM=$SYSTEM_MOUNT/system
+active_slot=`getprop ro.boot.slot_suffix`
+if [ ! -z "$active_slot" ]; then
+  device_abpartition=true
+  MOUNT_POINT=/system
+  block=/dev/block/bootdevice/by-name/system$active_slot
+  ui_print "- Current boot slot: $active_slot";
+elif [ -n "$(cat /etc/fstab | grep /system_root)" ];
+then
+  device_abpartition=false
+  MOUNT_POINT=/system_root
 else
-  SYSTEM_MOUNT=/system
-  SYSTEM=$SYSTEM_MOUNT
+  device_abpartition=false
+  MOUNT_POINT=/system
 fi
 
-# Mount whatever $SYSTEM_MOUNT is, sometimes remount is necessary if mounted read-only
-ui_print "- Mounting /system RW";
-grep -q "/system.*ro[\s,]" /proc/mounts && mount -o remount,rw $SYSTEM_MOUNT || mount -o rw "$block" $SYSTEM_MOUNT
+# Mount Partitions
+mounts=""
+for p in "/cache" "/data" "$MOUNT_POINT" "/vendor"; do
+  if [ -d "$p" ] && grep -q "$p" "/etc/fstab" && ! mountpoint -q "$p"; then
+    mounts="$mounts $p"
+  fi
+done
+ui_print "- Mounting $mounts";
+for m in $mounts; do
+  mount "$m"
+done
 
-# Try to detect system-as-root through $SYSTEM_MOUNT/init.rc like Magisk does
+# Remount $MOUNT_POINT RW
+ui_print "- Mounting  $MOUNT_POINT RW";
+mount -o rw,remount "$block" $MOUNT_POINT || mount -o rw,remount $MOUNT_POINT
+
+# Try to detect system-as-root through /system/init.rc like Magisk does
 # Remount /system to /system_root if we have system-as-root and bind /system to /system_root/system (like Magisk does)
 # For reference, check https://github.com/topjohnwu/Magisk/blob/master/scripts/util_functions.sh
-if [ -f $SYSTEM/init.rc ]; then
-  ui_print "- Device is system-as-root"
-  mk_system_root;
+sleep 0.3;
+if [ -f /system/init.rc ]; then
+  ui_print "- System is /system/system";
+  ui_print "- Device is system-as-root";
+  [ -L /system_root ] && rm -f /system_root
+  mkdir /system_root
   mount --move /system /system_root
   mount -o bind /system_root/system /system
-  SYSTEM_MOUNT=/system_root
-  SYSTEM=/system
-  mounts="$mounts /system $SYSTEM_MOUNT"
+  SYSTEM=/system_root/system
+  mounts="$mounts /system_root"
+elif [ -f /system_root/init.rc ]; then
+  ui_print "- System is /system_root/system";
+  ui_print "- Device is system-as-root";
+  SYSTEM=system_root/system
 else
-  mounts="$mounts $SYSTEM_MOUNT"
+  ui_print "- System is /system";
+  SYSTEM=/system
 fi
+
 ui_print " ";
 
 TMP="/tmp"
