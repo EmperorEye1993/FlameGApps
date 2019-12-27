@@ -202,16 +202,17 @@ mkdir $TMP/flamegapps/logs
 chmod 0755 $TMP/flamegapps/logs
 log_dir="$TMP/flamegapps/logs"
 flame_log="$log_dir/installation_log.txt"
+flame_prop="$TMP/flame.prop"
+build_prop="$SYSTEM/build.prop"
+details_log="$log_dir/details.prop"
 
 take_failed_logs() {
     ui_print "- Copying logs to $log_folder";
     ui_print " ";
     cp -f $TMP/recovery.log $log_dir/recovery.log
-    cp -f $SYSTEM/build.prop $log_dir/build.prop
-    cp -f $TMP/flame.prop $log_dir/flame.prop
     cd $log_dir
-    tar -cz -f "$TMP/flamegapps_debug_failed_logs.tar.gz" *
-    cp -f $TMP/flamegapps_debug_failed_logs.tar.gz $log_folder/flamegapps_debug_failed_logs.tar.gz
+    tar -cz -f "$TMP/flamegapps_addon_debug_failed_logs.tar.gz" *
+    cp -f $TMP/flamegapps_addon_debug_failed_logs.tar.gz $log_folder/flamegapps_addon_debug_failed_logs.tar.gz
     cd /
     rm -rf $log_dir;
 }
@@ -220,11 +221,9 @@ take_success_logs() {
     ui_print "- Copying logs to $log_folder";
     ui_print " ";
     cp -f $TMP/recovery.log $log_dir/recovery.log
-    cp -f $SYSTEM/build.prop $log_dir/build.prop
-    cp -f $TMP/flame.prop $log_dir/flame.prop
     cd $log_dir
-    tar -cz -f "$TMP/flamegapps_debug_success_logs.tar.gz" *
-    cp -f $TMP/flamegapps_debug_success_logs.tar.gz $log_folder/flamegapps_debug_success_logs.tar.gz
+    tar -cz -f "$TMP/flamegapps_addon_debug_success_logs.tar.gz" *
+    cp -f $TMP/flamegapps_addon_debug_success_logs.tar.gz $log_folder/flamegapps_addon_debug_success_logs.tar.gz
     cd /
     rm -rf $log_dir;
 }
@@ -232,8 +231,7 @@ take_success_logs() {
 echo ---------------------------------------------------- >> $flame_log;
 echo "---------- FlameGApps Installation Logs ----------" >> $flame_log;
 echo "# " >> $flame_log;
-echo "- System Mount: $SYSTEM_MOUNT" >> $flame_log;
-echo "- System: $SYSTEM" >> $flame_log;
+echo "- Mount Point: $MOUNT_POINT" >> $flame_log;
 echo "- Current slot is: $active_slot" >> $flame_log;
 echo ---------------------------------------------------- >> $flame_log;
 
@@ -258,6 +256,10 @@ echo "- Device ARCH is: $device_architecture" >> $flame_log;
 echo "- Device is: $device_code" >> $flame_log;
 echo "# End Device And Flame Information" >> $flame_log;
 echo ---------------------------------------------------- >> $flame_log;
+
+# Get Prop Details Before Compatibility Checks
+cat $build_prop >> $details_log;
+cat $flame_prop >> $details_log;
 
 # Prepare Msgs
 wrong_version="! Wrong Android Version Detected"
