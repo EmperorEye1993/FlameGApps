@@ -18,7 +18,7 @@
 #
 ###########################################
 # File Name    : installer.sh
-# Last Updated : 2019-12-27
+# Last Updated : 2019-12-28
 ###########################################
 ##
 # List of the Basic edition gapps files
@@ -211,8 +211,8 @@ take_failed_logs() {
     ui_print " ";
     cp -f $TMP/recovery.log $log_dir/recovery.log
     cd $log_dir
-    tar -cz -f "$TMP/flamegapps_addon_debug_failed_logs.tar.gz" *
-    cp -f $TMP/flamegapps_addon_debug_failed_logs.tar.gz $log_folder/flamegapps_addon_debug_failed_logs.tar.gz
+    tar -cz -f "$TMP/flamegapps_debug_failed_logs.tar.gz" *
+    cp -f $TMP/flamegapps_debug_failed_logs.tar.gz $log_folder/flamegapps_debug_failed_logs.tar.gz
     cd /
     rm -rf $log_dir;
 }
@@ -222,8 +222,8 @@ take_success_logs() {
     ui_print " ";
     cp -f $TMP/recovery.log $log_dir/recovery.log
     cd $log_dir
-    tar -cz -f "$TMP/flamegapps_addon_debug_success_logs.tar.gz" *
-    cp -f $TMP/flamegapps_addon_debug_success_logs.tar.gz $log_folder/flamegapps_addon_debug_success_logs.tar.gz
+    tar -cz -f "$TMP/flamegapps_debug_success_logs.tar.gz" *
+    cp -f $TMP/flamegapps_debug_success_logs.tar.gz $log_folder/flamegapps_debug_success_logs.tar.gz
     cd /
     rm -rf $log_dir;
 }
