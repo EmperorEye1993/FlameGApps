@@ -2,9 +2,7 @@
 #
 ###########################################
 #
-# This file is part of the FlameGApps Project
-#
-# Copyright (C) 2019 ayandebnath @xda-developers
+# This file is part of the FlameGApps Project by ayandebnath @xda-developers
 #
 # The FlameGApps scripts are free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +16,7 @@
 #
 ###########################################
 # File Name    : installer.sh
-# Last Updated : 2019-12-28
+# Last Updated : 2020-01-06
 ###########################################
 ##
 # List of the Basic edition gapps files
