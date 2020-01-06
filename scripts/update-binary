@@ -1,9 +1,8 @@
 #!/sbin/sh
 #
 ############################################
-# This file is part of the FlameGApps Project
 #
-# Copyright (C) 2019 ayandebnath @xda-developers
+# This file is part of the FlameGApps Project by ayandebnath @xda-developers
 #
 # The FlameGApps scripts are free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,22 +14,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-###########################################
+############################################
 # File Name    : update-binary
-# Last Updated : 2019-12-26
-###########################################
+# Last Updated : 2020-01-06
+############################################
 ##
 
 export ZIPFILE="$3"
 export OUTFD="/proc/self/fd/$2"
 export TMP="/tmp"
 
-case "$(uname -m)" in
-  *86*) export BINARCH="x86";; # e.g. Zenfone is i686
-  *ar*) export BINARCH="arm";; # i.e. armv7l and aarch64
-esac
-
-bb="$TMP/busybox-$BINARCH"
+bb="$TMP/busybox-arm"
 l="$TMP/bin"
 
 setenforce 0
@@ -39,8 +33,6 @@ ui_print() {
   echo "ui_print $1" > "$OUTFD";
   echo "ui_print" > "$OUTFD";
 }
-
-set_progress() { echo "set_progress $1" > "$OUTFD"; }
 
 ui_print " ";
 ui_print "  _____ _                        ";
@@ -63,10 +55,9 @@ ui_print "*************************************************";
 ui_print " ";
 
 #################
-set_progress 0.10;
+
 ui_print "Processing...";
 ui_print " ";
-
 for f in busybox-arm flame.prop addon.d.sh installer.sh; do
   unzip -o "$ZIPFILE" "$f" -d "$TMP";
 done
@@ -76,7 +67,6 @@ for f in busybox-arm installer.sh; do
 done
 
 # Preparing
-set_progress 0.20;
 if [ -e "$bb" ]; then
   install -d "$l"
   for i in $($bb --list); do
