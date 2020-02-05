@@ -16,13 +16,14 @@
 #
 ###########################################
 # File Name    : installer.sh
-# Last Updated : 2020-01-06
+# Last Updated : 2020-02-05
 ###########################################
 ##
 # List of the Basic edition gapps files
 basic_gapps_list="
 DigitalWellbeing
 GoogleLocationHistory
+SetupWizard
 SoundPickerGoogle"
 
 # List of the Full edition gapps files
@@ -39,6 +40,7 @@ GoogleKeyboard
 GooglePhotos
 GoogleLocationHistory
 MarkupGoogle
+SetupWizard
 SoundPickerGoogle
 WallpaperPickerGoogle"
 
@@ -168,7 +170,7 @@ TMP="/tmp"
 
 recovery_actions;
 
-PROPFILES="$SYSTEM/build.prop $TMP/flame.prop"
+PROPFILES="$SYSTEM/build.prop $TMP/flame.prop $TMP/config.prop"
 
 get_file_prop() {
   grep -m1 "^$2=" "$1" | cut -d= -f2
@@ -650,6 +652,101 @@ install_gapps() {
     rm -rf $UNZIP_FOLDER/system
 }
 
+# remove_line <file> <line match string>
+# By osm0sis @xda-developers
+# For reference, check https://github.com/osm0sis/AnyKernel3/blob/master/tools/ak3-core.sh
+remove_line() {
+  if grep -q "$2" $1; then
+    local line=$(grep -n "$2" $1 | head -n1 | cut -d: -f1);
+    sed -i "${line}d" $1;
+  fi;
+}
+
+run_basic_config() {
+    if [ -f $log_folder/flamegapps-config.txt ]; then
+      cp -f $log_folder/flamegapps-config.txt $TMP/config.prop
+      ui_print " ";
+      ui_print "Debloater Config detected in $log_folder";
+      sleep 1;
+      rm_setupwizard=`get_prop ro.basic.remove.setupwizard`
+      rm_wellbeing=`get_prop ro.basic.remove.wellbeing`
+      if [ "$rm_setupwizard" = "1" ]; then
+        ui_print "- Removing SetupWizard";
+        sleep 0.3;
+        rm -rf $SYSTEM/priv-app/GoogleRestore
+        rm -rf $SYSTEM/priv-app/GoogleBackupTransport
+        rm -rf $SYSTEM/priv-app/SetupWizard
+        remove_line $TMP/addon.d.sh "priv-app/GoogleRestore/GoogleRestore.apk";
+        remove_line $TMP/addon.d.sh "priv-app/GoogleBackupTransport/GoogleBackupTransport.apk";
+        remove_line $TMP/addon.d.sh "priv-app/SetupWizard/SetupWizard.apk";
+      fi
+      if [ "$rm_wellbeing" = "1" ]; then
+        ui_print "- Removing DigitalWellbeing";
+        sleep 0.3;
+        rm -rf $SYSTEM/priv-app/WellbeingPrebuilt
+        remove_line $TMP/addon.d.sh "priv-app/WellbeingPrebuilt/WellbeingPrebuilt.apk";
+      fi
+      cp -f $TMP/config.prop $log_dir/config.prop
+    fi
+}
+
+run_full_config() {
+    if [ -f $log_folder/flamegapps-config.txt ]; then
+      cp -f $log_folder/flamegapps-config.txt $TMP/config.prop
+      ui_print " ";
+      ui_print "Debloater Config detected in $log_folder";
+      sleep 1;
+      rm_setupwizard=`get_prop ro.full.remove.setupwizard`
+      rm_wellbeing=`get_prop ro.full.remove.wellbeing`
+      rm_photos=`get_prop ro.full.remove.photos`
+      rm_calendar=`get_prop ro.full.remove.calendar`
+      rm_calculator=`get_prop ro.full.remove.calculator`
+      rm_sounds=`get_prop ro.full.remove.sounds`
+      rm_wallpapers=`get_prop ro.full.remove.wallpapers`
+      if [ "$rm_setupwizard" = "1" ]; then
+        ui_print "- Removing SetupWizard";
+        sleep 0.3;
+        rm -rf $SYSTEM/priv-app/GoogleRestore
+        rm -rf $SYSTEM/priv-app/GoogleBackupTransport
+        rm -rf $SYSTEM/priv-app/SetupWizard
+        remove_line $TMP/addon.d.sh "priv-app/GoogleRestore/GoogleRestore.apk";
+        remove_line $TMP/addon.d.sh "priv-app/GoogleBackupTransport/GoogleBackupTransport.apk";
+        remove_line $TMP/addon.d.sh "priv-app/SetupWizard/SetupWizard.apk";
+      fi
+      if [ "$rm_wellbeing" = "1" ]; then
+        ui_print "- Removing DigitalWellbeing"
+        sleep 0.3;
+        rm -rf $SYSTEM/priv-app/WellbeingPrebuilt
+        remove_line $TMP/addon.d.sh "priv-app/WellbeingPrebuilt/WellbeingPrebuilt.apk";
+      fi
+      if [ "$rm_photos" = "1" ]; then
+        ui_print "- Removing Photos";
+        sleep 0.3;
+        rm -rf $SYSTEM/app/Photos
+        remove_line $TMP/addon.d.sh "app/Photos/Photos.apk";
+      fi
+      if [ "$rm_calendar" = "1" ]; then
+        ui_print "- Removing Calendar";
+        sleep 0.3;
+        rm -rf $SYSTEM/app/CalendarGooglePrebuilt
+        remove_line $TMP/addon.d.sh "app/CalendarGooglePrebuilt/CalendarGooglePrebuilt.apk";
+      fi
+      if [ "$rm_calculator" = "1" ]; then
+        ui_print "- Removing Calculator";
+        sleep 0.3;
+        rm -rf $SYSTEM/app/CalculatorGooglePrebuilt
+        remove_line $TMP/addon.d.sh "app/CalculatorGooglePrebuilt/CalculatorGooglePrebuilt.apk";
+      fi
+      if [ "$rm_sounds" = "1" ]; then
+        ui_print "- Removing Sound Picker";
+        sleep 0.3;
+        rm -rf $SYSTEM/app/SoundPickerPrebuilt
+        remove_line $TMP/addon.d.sh "app/SoundPickerPrebuilt/SoundPickerPrebuilt.apk"
+      fi
+      cp -f $TMP/config.prop $log_dir/config.prop
+    fi
+}
+
 # Unzip & Install Core GApps Files
 echo "# " >> $flame_log;
 echo "- Unzipping Core GApps Files" >> $flame_log;
@@ -669,6 +766,15 @@ echo "# " >> $flame_log;
 echo "- Installing GApps Files" >> $flame_log;
 echo "# " >> $flame_log;
 install_gapps >> $flame_log;
+
+# Run Debloater
+echo "- Debloating Device" >> $flame_log;
+echo "# " >> $flame_log;
+if [ "$edition_type" = "basic" ]; then
+  run_basic_config;
+elif [ "$edition_type" = "full" ]; then
+  run_full_config;
+fi
 # End
 
 echo ---------------------------------------------------- >> $flame_log;
