@@ -370,6 +370,7 @@ FULL_LIST="
 $SYSTEM/app/ExtShared
 $SYSTEM/app/FaceLock
 $SYSTEM/app/Clock
+$SYSTEM/app/ChromePublic
 $SYSTEM/app/DeskClock
 $SYSTEM/app/DashClock
 $SYSTEM/app/PrebuiltDeskClock
@@ -440,7 +441,7 @@ $SYSTEM/priv-app/GoogleContacts
 $SYSTEM/priv-app/GoogleDialer
 $SYSTEM/priv-app/Music
 $SYSTEM/priv-app/Music2
-$SYSTEM/priv-app/SnapGallery
+$SYSTEM/priv-app/SnapdragonGallery
 $SYSTEM/priv-app/Clock
 $SYSTEM/priv-app/Calendar
 $SYSTEM/priv-app/Calculator
